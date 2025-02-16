@@ -81,7 +81,9 @@ async def exchange_rates(message: Message):
             await message.answer('Не удалось получить данные о курсе валют!')
             return
         usd_to_rub = data['conversion_rates']['RUB']
-        eur_to_rub = data['conversion_rates']['EUR'] * usd_to_rub
+        eur_to_usd = data['conversion_rates']['EUR']
+
+        eur_to_rub = eur_to_usd * usd_to_rub
 
         await message.answer(f"1 USD - {usd_to_rub:.2f} RUB\n"
                              f"1 EUR - {eur_to_rub:.2f} RUB")

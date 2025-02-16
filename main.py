@@ -1,16 +1,16 @@
 import asyncio
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram import Bot, Dispatcher, F
-from aiogram.filters import CommandStart, Command
-from aiogram.types import Message, FSInputFile
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
-import requests
-import random
-
-from config import TOKEN
 import sqlite3
 import logging
+import requests
+import random
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram import Bot, Dispatcher, F
+from aiogram.filters import Command
+from aiogram.types import Message
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
+
+from config import TOKEN
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -26,7 +26,6 @@ keyboards = ReplyKeyboardMarkup(keyboard=[
     [button_registr, button_exchange_rates],
     [button_tips, button_finances]
     ], resize_keyboard=True)
-
 
 conn = sqlite3.connect('user.db')
 cursor = conn.cursor()
@@ -72,6 +71,7 @@ async def registration(message: Message):
         conn.commit()
         await message.answer('Вы успешно зарегистрированы!')
 
+
 @dp.message(F.text == 'Курс валют')
 async def exchange_rates(message: Message):
     url = 'https://v6.exchangerate-api.com/v6/6CEF276d4bc0d6927CE58bf4/latest/USD'
@@ -91,6 +91,7 @@ async def exchange_rates(message: Message):
     except:
         await message.answer('Произошла ошибка')
 
+
 @dp.message(F.text == 'Советы по экономии')
 async def send_tips(message:Message):
     tips = [
@@ -104,47 +105,48 @@ async def send_tips(message:Message):
     tip = random.choice(tips)
     await message.answer(tip)
 
+
 @dp.message(F.text == 'Личные финансы')
-async def finances(massage: Message, state: FSMContext):
+async def finances(message: Message, state: FSMContext):
     await state.set_state(FinancesForm.category1)
     await message.reply('Введите первую категорию расходов:')
 
 @dp.message(FinancesForm.category1)
-async def finances(massage: Message, state: FSMContext):
+async def finances(message: Message, state: FSMContext):
     await state.update_data(category1 = message.text)
     await state.set_state(FinancesForm.expenses1)
     await message.reply('Введите расходы для категории 1:')
 
 @dp.message(FinancesForm.expenses1)
-async def finances(massage: Message, state: FSMContext):
+async def finances(message: Message, state: FSMContext):
     await state.update_data(expenses1 = float(message.text))
     await state.set_state(FinancesForm.category2)
     await message.reply('Введите вторую категорию расходов:')
 
 @dp.message(FinancesForm.category2)
-async def finances(massage: Message, state: FSMContext):
+async def finances(message: Message, state: FSMContext):
     await state.update_data(category2 = message.text)
     await state.set_state(FinancesForm.expenses2)
     await message.reply('Введите расходы для категории 2:')
 
 @dp.message(FinancesForm.expenses2)
-async def finances(massage: Message, state: FSMContext):
+async def finances(message: Message, state: FSMContext):
     await state.update_data(expenses2 = float(message.text))
     await state.set_state(FinancesForm.category3)
     await message.reply('Введите третью категорию расходов:')
 
 @dp.message(FinancesForm.category3)
-async def finances(massage: Message, state: FSMContext):
+async def finances(message: Message, state: FSMContext):
     await state.update_data(category3 = message.text)
     await state.set_state(FinancesForm.expenses3)
     await message.reply('Введите расходы для категории 3:')
 
 @dp.message(FinancesForm.expenses3)
-async def finances(massage: Message, state: FSMContext):
+async def finances(message: Message, state: FSMContext):
     data = await state.get_data()
     telegram_id = message.from_user.id
     cursor.execute('''UPDATE users SET category1 = ?, expenses1 = ?, category2 = ?, expenses2 = ?, category3 = ?, expenses3 = ? WHERE telegram_id = ?''',
-                   (data[category1], data[expenses1], data[category2], data[expenses2], data[category3], data[expenses3], float(message.text), telegram_id))
+                   (data['category1'], data['expenses1'], data['category2'], data['expenses2'], data['category3'], float(message.text), telegram_id))
     conn.commit()
     await state.clear()
 
